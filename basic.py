@@ -9,7 +9,40 @@ But:
 - Does not handle any special tokens.
 """
 
-from .base import Tokenizer, get_stats, merge
+def get_stats(ids):
+    counts = {}
+    for pair in zip(ids, ids[1:]):
+        counts[pair] = counts.get(pair, 0) + 1
+    return counts 
+
+
+def merge(ids, pair, idx):
+  # in the list of ints (ids), replace all consecutive occurences of pair with the new token idx
+  newids = []
+  i = 0
+  while i < len(ids):
+    # if we are not at the very last position AND the pair matches, replace it
+    if i < len(ids) - 1 and ids[i] == pair[0] and ids[i+1] == pair[1]:
+      newids.append(idx)
+      i += 2
+    else:
+      newids.append(ids[i])
+      i += 1
+  return newids
+
+
+class Tokenizer:
+    def __init__(self):
+        pass
+
+    def train(self, text, vocab_size, verbose=False):
+        raise NotImplementedError
+
+    def encode(self, text):
+        raise NotImplementedError
+
+    def decode(self, ids):
+        raise NotImplementedError
 
 
 class BasicTokenizer(Tokenizer):
@@ -72,3 +105,27 @@ class BasicTokenizer(Tokenizer):
             idx = self.merges[pair]
             ids = merge(ids, pair, idx)
         return ids
+    
+
+# Testing 
+
+if __name__ == "__main__":
+    
+    # Initialize the tokenizer
+    tokenizer = BasicTokenizer()
+
+    # Sample text
+    long_text = "This is a test to see how well the Byte Pair Encoding tokenizer handles larger texts. " \
+                "It should be able to merge common patterns and create new tokens as necessary. " \
+                "The goal is to reduce the total number of tokens by combining frequent byte sequences."
+
+    # Train the tokenizer on sample text
+    tokenizer.train(long_text, vocab_size=300, verbose=True)
+
+    # Encode 
+    encoded = tokenizer.encode(long_text)
+    print("Encoded:", encoded)
+
+    # Decode 
+    decoded = tokenizer.decode(encoded)
+    print("Decoded:", decoded)
